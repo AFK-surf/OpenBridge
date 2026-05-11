@@ -4,7 +4,7 @@
 // Version numbers - modify this file for releases
 
 // Bump this for release
-MARKETING_VERSION = 0.1.1
+MARKETING_VERSION = 0.1.2
 
 // workflow will update this
 // based on versions scanned from released appcasts
