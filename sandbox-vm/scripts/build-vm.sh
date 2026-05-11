@@ -19,7 +19,7 @@ docker build --platform linux/arm64 -f vmbuild/Dockerfile -t "sandbox-vm-vm:$ima
 container_id="$(docker create "sandbox-vm-vm:$image_tag")"
 rm -f resources/vm/rootfs.img.tmp
 docker export "$container_id" > resources/vm/rootfs.tar.tmp
-mkfs.erofs -b 4096 --tar=f resources/vm/rootfs.img.tmp resources/vm/rootfs.tar.tmp
+mkfs.erofs -b 4096 -C 65536 -zzstd,15 --tar=f resources/vm/rootfs.img.tmp resources/vm/rootfs.tar.tmp
 rm -f resources/vm/rootfs.tar.tmp
 mv resources/vm/rootfs.img.tmp resources/vm/rootfs.img
 docker rm "$container_id"
