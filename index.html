@@ -62,10 +62,13 @@
 
     <main id="top">
       <section class="hero-band section-shell">
-        <div class="ambient ambient-peach" aria-hidden="true"></div>
         <div class="hero-copy">
           <div>
             <h1>The best open source codex alternative</h1>
+            <p class="hero-lede">
+              Native chat, your providers, and sandboxed review in one
+              open-source desktop loop.
+            </p>
             <div class="button-row" role="group" aria-label="Primary actions">
               <a
                 class="button button-primary"
@@ -77,10 +80,6 @@
               <a class="button button-outline" href="#build">Build locally</a>
             </div>
           </div>
-          <p class="hero-lede">
-            Native chat, your providers, and sandboxed review in one open-source
-            desktop loop.
-          </p>
         </div>
         <figure class="hero-media demo-media">
           <video
@@ -100,7 +99,7 @@
       </section>
 
       <section class="section-shell editorial-grid" id="workflows">
-        <div>
+        <div class="feature-heading">
           <p class="badge-label">
             <svg class="lucide-icon" aria-hidden="true" viewBox="0 0 24 24">
               <path d="M12 22v-9"></path>
@@ -120,19 +119,46 @@
         </div>
         <div class="feature-grid">
           <article class="feature-card">
-            <span>01</span>
-            <h3>Local sessions</h3>
-            <p>One conversation, one local agent loop.</p>
+            <figure class="feature-card-art">
+              <img
+                src="docs/assets/features/local-sessions.webp"
+                width="900"
+                height="507"
+                alt="Local environment message illustration"
+                loading="lazy">
+            </figure>
+            <div class="feature-card-copy">
+              <h3>Local sessions</h3>
+              <p>One conversation, one local agent loop.</p>
+            </div>
           </article>
           <article class="feature-card">
-            <span>02</span>
-            <h3>Computer use</h3>
-            <p>Operate Mac apps only when you allow it.</p>
+            <figure class="feature-card-art">
+              <img
+                src="docs/assets/features/computer-use.webp"
+                width="900"
+                height="507"
+                alt="Computer use status illustration"
+                loading="lazy">
+            </figure>
+            <div class="feature-card-copy">
+              <h3>Computer use</h3>
+              <p>Operate Mac apps only when you allow it.</p>
+            </div>
           </article>
           <article class="feature-card">
-            <span>03</span>
-            <h3>Sandbox review</h3>
-            <p>Accept only the changes you want.</p>
+            <figure class="feature-card-art">
+              <img
+                src="docs/assets/features/sandbox-review.webp"
+                width="900"
+                height="507"
+                alt="Sandbox changes review illustration"
+                loading="lazy">
+            </figure>
+            <div class="feature-card-copy">
+              <h3>Sandbox review</h3>
+              <p>Accept only the changes you want.</p>
+            </div>
           </article>
         </div>
       </section>
@@ -387,6 +413,196 @@ BUILD_CONFIGURATION=UnsignedDebug bash DevKit/Scripts/workspace_build_debug.sh</
         </div>
       </section>
 
+      <section
+        class="section-shell faq-section"
+        id="faq"
+        aria-labelledby="faq-heading">
+        <div class="faq-heading">
+          <h2 id="faq-heading">Frequently Asked Questions</h2>
+        </div>
+        <div class="faq-list">
+          <article class="faq-item" data-faq-item>
+            <button
+              class="faq-question"
+              type="button"
+              id="faq-question-1"
+              aria-expanded="false"
+              aria-controls="faq-answer-1"
+              data-faq-trigger>
+              <span>What is OpenBridge?</span>
+              <svg class="faq-icon" aria-hidden="true" viewBox="0 0 24 24">
+                <line x1="12" y1="6" x2="12" y2="18"></line>
+                <line x1="6" y1="12" x2="18" y2="12"></line>
+              </svg>
+            </button>
+            <div
+              class="faq-answer"
+              id="faq-answer-1"
+              role="region"
+              aria-labelledby="faq-question-1"
+              aria-hidden="true"
+              data-faq-answer>
+              <div class="faq-answer-inner">
+                <p>
+                  OpenBridge is a macOS-first local agent chat app for running
+                  coding and productivity agents on your own machine.
+                </p>
+              </div>
+            </div>
+          </article>
+          <article class="faq-item" data-faq-item>
+            <button
+              class="faq-question"
+              type="button"
+              id="faq-question-2"
+              aria-expanded="false"
+              aria-controls="faq-answer-2"
+              data-faq-trigger>
+              <span>Is OpenBridge local-first?</span>
+              <svg class="faq-icon" aria-hidden="true" viewBox="0 0 24 24">
+                <line x1="12" y1="6" x2="12" y2="18"></line>
+                <line x1="6" y1="12" x2="18" y2="12"></line>
+              </svg>
+            </button>
+            <div
+              class="faq-answer"
+              id="faq-answer-2"
+              role="region"
+              aria-labelledby="faq-question-2"
+              aria-hidden="true"
+              data-faq-answer>
+              <div class="faq-answer-inner">
+                <p>
+                  Yes. Provider credentials, agent state, skills, schedules,
+                  and sandbox workflows are managed locally by the desktop app.
+                </p>
+              </div>
+            </div>
+          </article>
+          <article class="faq-item" data-faq-item>
+            <button
+              class="faq-question"
+              type="button"
+              id="faq-question-3"
+              aria-expanded="false"
+              aria-controls="faq-answer-3"
+              data-faq-trigger>
+              <span>Which model providers does it support?</span>
+              <svg class="faq-icon" aria-hidden="true" viewBox="0 0 24 24">
+                <line x1="12" y1="6" x2="12" y2="18"></line>
+                <line x1="6" y1="12" x2="18" y2="12"></line>
+              </svg>
+            </button>
+            <div
+              class="faq-answer"
+              id="faq-answer-3"
+              role="region"
+              aria-labelledby="faq-question-3"
+              aria-hidden="true"
+              data-faq-answer>
+              <div class="faq-answer-inner">
+                <p>
+                  It works with OAuth, API-key, subscription, gateway, and
+                  OpenAI-compatible routes, including OpenAI, Anthropic, Google
+                  Gemini, Bedrock, Azure, Cloudflare, Cerebras, and custom
+                  endpoints.
+                </p>
+              </div>
+            </div>
+          </article>
+          <article class="faq-item" data-faq-item>
+            <button
+              class="faq-question"
+              type="button"
+              id="faq-question-4"
+              aria-expanded="false"
+              aria-controls="faq-answer-4"
+              data-faq-trigger>
+              <span>How are file changes reviewed?</span>
+              <svg class="faq-icon" aria-hidden="true" viewBox="0 0 24 24">
+                <line x1="12" y1="6" x2="12" y2="18"></line>
+                <line x1="6" y1="12" x2="18" y2="12"></line>
+              </svg>
+            </button>
+            <div
+              class="faq-answer"
+              id="faq-answer-4"
+              role="region"
+              aria-labelledby="faq-question-4"
+              aria-hidden="true"
+              data-faq-answer>
+              <div class="faq-answer-inner">
+                <p>
+                  Agent edits happen in a sandbox first. You can inspect
+                  proposed changes, accept selected files, accept all, or
+                  discard the run before anything touches the host filesystem.
+                </p>
+              </div>
+            </div>
+          </article>
+          <article class="faq-item" data-faq-item>
+            <button
+              class="faq-question"
+              type="button"
+              id="faq-question-5"
+              aria-expanded="false"
+              aria-controls="faq-answer-5"
+              data-faq-trigger>
+              <span>What are skills?</span>
+              <svg class="faq-icon" aria-hidden="true" viewBox="0 0 24 24">
+                <line x1="12" y1="6" x2="12" y2="18"></line>
+                <line x1="6" y1="12" x2="18" y2="12"></line>
+              </svg>
+            </button>
+            <div
+              class="faq-answer"
+              id="faq-answer-5"
+              role="region"
+              aria-labelledby="faq-question-5"
+              aria-hidden="true"
+              data-faq-answer>
+              <div class="faq-answer-inner">
+                <p>
+                  Skills are local capability packages with a SKILL.md entry
+                  point. OpenBridge advertises active skills to the agent and
+                  loads the relevant instructions only when a task needs them.
+                </p>
+              </div>
+            </div>
+          </article>
+          <article class="faq-item" data-faq-item>
+            <button
+              class="faq-question"
+              type="button"
+              id="faq-question-6"
+              aria-expanded="false"
+              aria-controls="faq-answer-6"
+              data-faq-trigger>
+              <span>What do I need to build it?</span>
+              <svg class="faq-icon" aria-hidden="true" viewBox="0 0 24 24">
+                <line x1="12" y1="6" x2="12" y2="18"></line>
+                <line x1="6" y1="12" x2="18" y2="12"></line>
+              </svg>
+            </button>
+            <div
+              class="faq-answer"
+              id="faq-answer-6"
+              role="region"
+              aria-labelledby="faq-question-6"
+              aria-hidden="true"
+              data-faq-answer>
+              <div class="faq-answer-inner">
+                <p>
+                  You need macOS with Virtualization.framework support, Xcode,
+                  Go 1.24 or newer, Node.js with Corepack/Yarn, make, and
+                  protoc when changing VM RPC protobufs.
+                </p>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
       <section class="final-cta section-shell">
         <img
           src="docs/assets/openbridge-logo.png"
@@ -405,6 +621,35 @@ BUILD_CONFIGURATION=UnsignedDebug bash DevKit/Scripts/workspace_build_debug.sh</
         >
       </section>
     </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <div class="footer-copy">
+          <a href="#top" aria-label="OpenBridge home">OpenBridge</a>
+        </div>
+        <nav class="footer-links" aria-label="Footer navigation">
+          <a href="#workflows">Workflows</a>
+          <a href="#providers">Providers</a>
+          <a href="#build">Build</a>
+          <a
+            class="footer-github"
+            href="https://github.com/AFK-surf/OpenBridge"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <svg class="github-mark" aria-hidden="true" viewBox="0 0 24 24">
+              <path
+                d="M12 .5C5.65.5.5 5.65.5 12c0 5.09 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.16 1.18A10.94 10.94 0 0 1 12 5.51c.98 0 1.95.13 2.87.39 2.19-1.49 3.15-1.18 3.15-1.18.63 1.58.24 2.75.12 3.04.74.8 1.18 1.83 1.18 3.08 0 4.42-2.69 5.38-5.25 5.67.41.35.78 1.06.78 2.14 0 1.55-.01 2.79-.01 3.17 0 .31.21.67.79.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"
+              ></path>
+            </svg>
+            <span>GitHub</span>
+          </a>
+        </nav>
+        <p class="footer-legal">
+          © 2026 AFK AI, Inc. All rights reserved.
+        </p>
+      </div>
+    </footer>
 
     <script src="site.js" defer></script>
   </body>
