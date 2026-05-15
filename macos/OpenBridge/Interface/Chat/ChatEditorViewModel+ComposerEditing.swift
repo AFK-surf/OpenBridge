@@ -166,16 +166,7 @@ extension ChatEditorViewModel {
             selectedModelID = settings.selectedModelID
             return
         }
-        let selected = BridgeAIProviderRegistry.displayModel(
-            provider: settings.selectedModelProvider,
-            id: settings.selectedModelID
-        )
-        .flatMap { model in
-            BridgeAIProvider.provider(for: model).flatMap { provider in
-                settings[provider].isEnabled ? model : nil
-            }
-        }
-        ?? BridgeAIProviderRegistry.defaultModel(settings: settings)
+        let selected = BridgeAIProviderRegistry.selectedDisplayModel(settings: settings)
         selectedModelProvider = selected.provider
         selectedModelID = selected.id
     }
@@ -205,6 +196,7 @@ extension ChatEditorViewModel {
               SettingsManager.shared.localEnvironmentPermissionMode != mode
         else { return }
         SettingsManager.shared.localEnvironmentPermissionMode = mode
+        AgentSessionManager.shared.applyLocalEnvironmentPermissionModeChange(mode)
     }
 
     private func openAIProviderSettings() {

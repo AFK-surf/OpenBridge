@@ -37,6 +37,9 @@ struct AIProvidersSettingsView: View {
             guard newPath.isEmpty else { return }
             Task { await reload() }
         }
+        .onReceiveNotification(name: .aiProviderSettingsDidChange) { _ in
+            Task { await reload() }
+        }
     }
 
     private var header: some View {

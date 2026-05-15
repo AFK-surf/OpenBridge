@@ -48,6 +48,7 @@ final class LocalAgentSession: Identifiable {
     private var localBackgroundManager: BackgroundTaskManager?
     private var localAgentUnsubscribe: Unsubscribe?
     private var localRunTask: Task<Void, Never>?
+    private var pendingRuntimeConfigurationRefresh = false
     private var localAssistantMessageID: String?
     private var localAssistantText = ""
     private var localToolStates: [String: AssistantToolCallState] = [:]
@@ -184,7 +185,6 @@ final class LocalAgentSession: Identifiable {
         let now = Int64(Date().timeIntervalSince1970)
         listCreatedAt = listCreatedAt ?? now
         listUpdatedAt = listUpdatedAt ?? now
-        _ = try await ensureLocalAgent()
     }
 
     func teardown() async {
@@ -270,6 +270,7 @@ final class LocalAgentSession: Identifiable {
         AgentSessionManager.shared.clearLocalPermission(sessionId: sessionID)
         updateLocalAssistantState(phase: "cancelled", isStreaming: false)
         onSessionFinished?("cancelled", nil)
+        refreshRuntimeConfigurationAfterRunIfNeeded()
         return true
     }
 
@@ -321,6 +322,31 @@ final class LocalAgentSession: Identifiable {
 
     // MARK: - Local KWWK Agent
 
+    func refreshRuntimeConfiguration() async {
+        guard let localAgent else { return }
+        guard !isProcessing else {
+            pendingRuntimeConfigurationRefresh = true
+            return
+        }
+        pendingRuntimeConfigurationRefresh = false
+        localAgent.state.model = await BridgeAIProviderRegistry.selectedModel()
+        localAgent.state.systemPrompt = await makeLocalAgentSystemPrompt()
+    }
+
+    private func makeLocalAgentSystemPrompt() async -> String {
+        let skillManager = SkillManager.shared
+        let cwd = skillManager.skillDirs.workspace.path
+        let memoryPrompt = await MemoryRepository.shared.systemPromptSection()
+        let environmentInventory = try? await AgentSessionManager.shared.localEnvironmentSystemPromptSection()
+        return OpenBridgeSystemPromptBuilder.build(
+            cwd: cwd,
+            skills: skillManager.skills,
+            memory: memoryPrompt,
+            computerUsePrompt: OpenBridgeComputerUseAgent.systemPromptWithStartupInventory(clientStore: computerUseClientStore),
+            environmentInventory: environmentInventory
+        )
+    }
+
     private func ensureLocalAgent() async throws -> Agent {
         if let localAgent {
             return localAgent
@@ -330,15 +356,7 @@ final class LocalAgentSession: Identifiable {
         let backgroundManager = BackgroundTaskManager()
         let skillManager = SkillManager.shared
         let cwd = skillManager.skillDirs.workspace.path
-        let memoryPrompt = await MemoryRepository.shared.systemPromptSection()
-        let environmentInventory = try? await AgentSessionManager.shared.localEnvironmentSystemPromptSection()
-        let systemPrompt = OpenBridgeSystemPromptBuilder.build(
-            cwd: cwd,
-            skills: skillManager.skills,
-            memory: memoryPrompt,
-            computerUsePrompt: OpenBridgeComputerUseAgent.systemPromptWithStartupInventory(clientStore: computerUseClientStore),
-            environmentInventory: environmentInventory
-        )
+        let systemPrompt = await makeLocalAgentSystemPrompt()
         localBackgroundManager = backgroundManager
 
         let config = await CodingAgentConfig(
@@ -472,9 +490,18 @@ final class LocalAgentSession: Identifiable {
         AgentSessionManager.shared.clearLocalPermission(sessionId: sessionID)
         updateLocalAssistantState(phase: lastFinishState ?? "completed", isStreaming: false)
         onSessionFinished?(lastFinishState ?? "completed", error?.localizedDescription)
+        refreshRuntimeConfigurationAfterRunIfNeeded()
         Task { [weak self] in
             guard let self else { return }
             await refreshWorkspaceState()
+        }
+    }
+
+    private func refreshRuntimeConfigurationAfterRunIfNeeded() {
+        guard pendingRuntimeConfigurationRefresh else { return }
+        Task { [weak self] in
+            guard let self else { return }
+            await refreshRuntimeConfiguration()
         }
     }
 

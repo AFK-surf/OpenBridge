@@ -51,11 +51,39 @@ enum BridgeAIProviderRegistry {
 
     static func selectedModel() async -> Model {
         let settings = await BridgeAIProviderSecretStore.readSettings()
-        return runtimeModel(
-            provider: settings.selectedModelProvider,
-            id: settings.selectedModelID,
+        return selectedModel(settings: settings)
+    }
+
+    static func selectedModel(settings: BridgeAIProviderSettings) -> Model {
+        let selected = enabledModel(
+            runtimeModel(
+                provider: settings.selectedModelProvider,
+                id: settings.selectedModelID,
+                settings: settings
+            ),
             settings: settings
-        ) ?? defaultModel(settings: settings)
+        )
+        return selected ?? defaultModel(settings: settings)
+    }
+
+    static func selectedDisplayModel(settings: BridgeAIProviderSettings) -> Model {
+        let selected = enabledModel(
+            displayModel(
+                provider: settings.selectedModelProvider,
+                id: settings.selectedModelID,
+                settings: settings
+            ),
+            settings: settings
+        )
+        return selected ?? defaultModel(settings: settings)
+    }
+
+    private static func enabledModel(_ model: Model?, settings: BridgeAIProviderSettings) -> Model? {
+        model.flatMap { model in
+            BridgeAIProvider.provider(for: model).flatMap { provider in
+                settings[provider].isEnabled ? model : nil
+            }
+        }
     }
 
     static func runtimeModel(provider: String, id: String) async -> Model? {
@@ -92,10 +120,14 @@ enum BridgeAIProviderRegistry {
     }
 
     static func displayModel(provider: String, id: String) -> Model? {
+        displayModel(provider: provider, id: id, settings: BridgeAIProviderSettings())
+    }
+
+    private static func displayModel(provider: String, id: String, settings: BridgeAIProviderSettings) -> Model? {
         if provider == BridgeAIProvider.openAIChatCompletions.rawValue {
             return openAIChatCompletionsModel(
                 id: id,
-                config: BridgeAIProviderSettings()[.openAIChatCompletions]
+                config: settings[.openAIChatCompletions]
             )
         }
         return ModelsCatalog.model(provider: provider, id: id)

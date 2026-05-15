@@ -159,6 +159,17 @@ final class AgentSessionManager {
 
     func refreshConnectorConfiguration() {
         isVMReady = true
+        vmLoadError = nil
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                _ = try await ensureRuntimeReady()
+                await refreshLoadedSessionRuntimeConfiguration()
+            } catch {
+                vmLoadError = error
+                logger.warning("Failed to refresh local connector configuration: \(error.localizedDescription)")
+            }
+        }
     }
 
     func restartConnector() {
@@ -166,6 +177,25 @@ final class AgentSessionManager {
         connector = nil
         disconnectVMConnector()
         isVMReady = true
+    }
+
+    func applyLocalEnvironmentPermissionModeChange(_ mode: LocalEnvironmentPermissionMode) {
+        connector?.applyPermissionModeChange(mode)
+        Task { [weak self] in
+            guard let self else { return }
+            await refreshLoadedSessionRuntimeConfiguration()
+        }
+    }
+
+    func reloadAIProviderConfiguration() async {
+        await BridgeAIProviderRegistry.registerProviders()
+        await refreshLoadedSessionRuntimeConfiguration()
+    }
+
+    private func refreshLoadedSessionRuntimeConfiguration() async {
+        for session in sessions.values {
+            await session.refreshRuntimeConfiguration()
+        }
     }
 
     private func disconnectVMConnector(shutdownBridge: Bool = false) {

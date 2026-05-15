@@ -14,6 +14,7 @@ extension Notification.Name {
     /// Posted when a skill should be activated in chat. The notification's `object` should be a `SkillInfo`.
     static let skillActivationRequested = Notification.Name("skillActivationRequested")
     static let skillInventoryDidChange = Notification.Name("skillInventoryDidChange")
+    static let aiProviderSettingsDidChange = Notification.Name("aiProviderSettingsDidChange")
 
     // MARK: - Shortcuts
 

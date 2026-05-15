@@ -2,6 +2,12 @@ import Foundation
 import KWWKAI
 import SwiftUI
 
+private struct AIProviderAuthSnapshot: Equatable {
+    var apiKey: String
+    var oauthAccessToken: String
+    var oauthRefreshToken: String
+}
+
 struct AIProviderDetailView: View {
     let provider: BridgeAIProvider
 
@@ -517,6 +523,8 @@ struct AIProviderDetailView: View {
         defer { isSaving = false }
 
         do {
+            let previousSettings = await BridgeAIProviderSecretStore.readSettings()
+            let previousAuth = await authSnapshot()
             if config.authMethod == .apiKey {
                 try await BridgeAIProviderSecretStore.saveSecret(apiKey, for: provider, kind: .apiKey)
             } else {
@@ -539,9 +547,14 @@ struct AIProviderDetailView: View {
             }
 
             config.isEnabled = hasStoredAuth || config.isEnabled
-            var settings = await BridgeAIProviderSecretStore.readSettings()
+            var settings = previousSettings
             settings[provider] = config
             try await BridgeAIProviderSecretStore.saveSettings(settings)
+            await applyProviderConfigurationChange(
+                previousSettings: previousSettings,
+                updatedSettings: settings,
+                previousAuth: previousAuth
+            )
             statusMessage = "Saved"
             await refreshUsage()
         } catch {
@@ -570,6 +583,8 @@ struct AIProviderDetailView: View {
         }
 
         do {
+            let previousSettings = await BridgeAIProviderSecretStore.readSettings()
+            let previousAuth = await authSnapshot()
             let callbacks = OAuthLogin.Callbacks(
                 onAuthURL: { url in
                     Browser.open(url)
@@ -610,9 +625,14 @@ struct AIProviderDetailView: View {
                 config.baseURL = endpoint
             }
 
-            var settings = await BridgeAIProviderSecretStore.readSettings()
+            var settings = previousSettings
             settings[provider] = config
             try await BridgeAIProviderSecretStore.saveSettings(settings)
+            await applyProviderConfigurationChange(
+                previousSettings: previousSettings,
+                updatedSettings: settings,
+                previousAuth: previousAuth
+            )
             statusMessage = "Signed in"
             await refreshUsage()
         } catch is CancellationError {
@@ -628,6 +648,8 @@ struct AIProviderDetailView: View {
     private func resetProvider() async {
         errorMessage = nil
         do {
+            let previousSettings = await BridgeAIProviderSecretStore.readSettings()
+            let previousAuth = await authSnapshot()
             try await BridgeAIProviderSecretStore.saveSecret("", for: provider, kind: .apiKey)
             try await BridgeAIProviderSecretStore.saveSecret("", for: provider, kind: .oauthAccessToken)
             try await BridgeAIProviderSecretStore.saveSecret("", for: provider, kind: .oauthRefreshToken)
@@ -644,13 +666,42 @@ struct AIProviderDetailView: View {
             }
             usageSnapshot = .unavailable
 
-            var settings = await BridgeAIProviderSecretStore.readSettings()
+            var settings = previousSettings
             settings[provider] = config
             try await BridgeAIProviderSecretStore.saveSettings(settings)
+            await applyProviderConfigurationChange(
+                previousSettings: previousSettings,
+                updatedSettings: settings,
+                previousAuth: previousAuth
+            )
             statusMessage = "Provider reset"
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    private func applyProviderConfigurationChange(
+        previousSettings: BridgeAIProviderSettings,
+        updatedSettings: BridgeAIProviderSettings,
+        previousAuth: AIProviderAuthSnapshot
+    ) async {
+        let updatedAuth = await authSnapshot()
+        guard previousSettings != updatedSettings || previousAuth != updatedAuth else { return }
+        await AgentSessionManager.shared.reloadAIProviderConfiguration()
+        await MainActor.run {
+            NotificationCenter.default.post(name: .aiProviderSettingsDidChange, object: nil)
+        }
+    }
+
+    private func authSnapshot() async -> AIProviderAuthSnapshot {
+        let apiKey = await BridgeAIProviderSecretStore.readSecret(for: provider, kind: .apiKey)
+        let oauthAccessToken = await BridgeAIProviderSecretStore.readSecret(for: provider, kind: .oauthAccessToken)
+        let oauthRefreshToken = await BridgeAIProviderSecretStore.readSecret(for: provider, kind: .oauthRefreshToken)
+        return AIProviderAuthSnapshot(
+            apiKey: apiKey,
+            oauthAccessToken: oauthAccessToken,
+            oauthRefreshToken: oauthRefreshToken
+        )
     }
 
     private func oauthLogin(callbacks: OAuthLogin.Callbacks) async throws -> OAuthCredentials {

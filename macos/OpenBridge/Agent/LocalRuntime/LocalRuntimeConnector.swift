@@ -39,6 +39,7 @@ private struct PendingConfirmation {
     var continuations: [CheckedContinuation<PermissionConfirmationReply, Never>]
     let sessionId: String?
     let grantKey: PermissionGrantKey?
+    let respondsToPermissionMode: Bool
 }
 
 private enum PermissionReplyReason {
@@ -147,6 +148,17 @@ final class LocalRuntimeConnector {
         state = .disconnected
         clearAllGrantedPermissions()
         killAllProcesses()
+    }
+
+    func applyPermissionModeChange(_ mode: LocalEnvironmentPermissionMode) {
+        guard environmentKind == .localMacOS else { return }
+
+        switch mode {
+        case .default:
+            revokeGrantedPermissions()
+        case .fullAccess:
+            approvePendingHostAccessPermissions()
+        }
     }
 
     private func currentArch() -> String {
@@ -497,6 +509,19 @@ private extension LocalRuntimeConnector {
         grantedPermissionKeys = Set(grantedPermissionKeys.filter { $0.sessionKey != sessionKey })
     }
 
+    func revokeGrantedPermissions() {
+        grantedPermissionKeys.removeAll()
+    }
+
+    func approvePendingHostAccessPermissions() {
+        let confirmationIDs = pendingConfirmations.compactMap { id, pending in
+            pending.respondsToPermissionMode ? id : nil
+        }
+        for confirmationID in confirmationIDs {
+            resolveConfirmation(id: confirmationID, approved: true)
+        }
+    }
+
     /// Injects a permission_request message into the session that triggered the
     /// request (identified by sessionId) and suspends until the user clicks
     /// Allow or Deny in the chat UI. Returns false immediately if no session
@@ -599,7 +624,8 @@ private extension LocalRuntimeConnector {
             pendingConfirmations[confirmationId] = PendingConfirmation(
                 continuations: [continuation],
                 sessionId: sessionId,
-                grantKey: grantKey
+                grantKey: grantKey,
+                respondsToPermissionMode: computerUseStart == nil
             )
             if let grantKey {
                 pendingPermissionConfirmationIDsByGrantKey[grantKey] = confirmationId

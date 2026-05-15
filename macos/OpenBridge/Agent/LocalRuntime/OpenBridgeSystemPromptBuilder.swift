@@ -39,8 +39,9 @@ enum OpenBridgeSystemPromptBuilder {
         - Treat environment="sandbox" as the default environment for file reads, writes, commands, and project work.
         - Do not switch to or target environment="local" on your own initiative. Use environment="local" only when the user explicitly asks for direct host work or when sandbox cannot complete the task.
         - environment="local" is protected because it operates directly on this Mac. Host writes, host commands, and sensitive host paths require explicit user approval.
-        - Local permission is temporary for the current task execution. Do not assume a past approval applies to a later user request.
-        - Before using bash, write, or edit in environment="local", call request_permission(environment="local", description="...") with a clear, specific description of what you plan to do so the user can make an informed decision.
+        \(localPermissionModeInstruction())
+        \(localPermissionPersistenceInstruction())
+        \(localPermissionRequestInstruction())
         - If local permission is pending and you can still make progress in sandbox, continue there. If blocked on approval, wait and explain what you are waiting for.
         - Do not operate on sandbox and local filesystems in the same task unless the user explicitly asks for that handoff. Choose one environment for filesystem work.
         - After completing sandbox file operations, call current_changes to review staged sandbox changes before finishing.
@@ -57,6 +58,33 @@ enum OpenBridgeSystemPromptBuilder {
         - Current date: \(currentDate())
         - Current working directory: \(normalizedPath(cwd))
         """
+    }
+
+    private static func localPermissionModeInstruction() -> String {
+        switch SettingsManager.shared.localEnvironmentPermissionMode {
+        case .default:
+            "- Current local permission mode: Default. Host writes, host commands, and sensitive host paths require request_permission before use."
+        case .fullAccess:
+            "- Current local permission mode: Full Access. Host writes, host commands, and sensitive host paths are already approved for this app session; do not call request_permission solely for local permission, but still prefer sandbox unless local access is required."
+        }
+    }
+
+    private static func localPermissionPersistenceInstruction() -> String {
+        switch SettingsManager.shared.localEnvironmentPermissionMode {
+        case .default:
+            "- Local permission is temporary for the current task execution. Do not assume a past approval applies to a later user request."
+        case .fullAccess:
+            "- Full Access remains available only while the user keeps this app setting enabled. If the setting changes back to Default, request local permission again before protected host access."
+        }
+    }
+
+    private static func localPermissionRequestInstruction() -> String {
+        switch SettingsManager.shared.localEnvironmentPermissionMode {
+        case .default:
+            "- Before using bash, write, or edit in environment=\"local\", call request_permission(environment=\"local\", description=\"...\") with a clear, specific description of what you plan to do so the user can make an informed decision."
+        case .fullAccess:
+            "- Before using bash, write, or edit in environment=\"local\", confirm local access is truly required; request_permission is not needed while Full Access is active."
+        }
     }
 
     private static func skillSection(skills: [Skill]) -> String {
