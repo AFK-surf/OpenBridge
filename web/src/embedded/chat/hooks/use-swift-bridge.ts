@@ -7,6 +7,13 @@ import type {
 import type { FollowUpState, QuoteFocusEvent } from '@/jsb';
 import { replaceSchedules } from '../stores/schedule-store';
 
+const terminalAssistantPhases = new Set([
+  'cancelled',
+  'completed',
+  'failed',
+  'idle',
+]);
+
 export function deriveIsStreamingFromBridgeState(
   bridgeIsStreaming: boolean,
   assistantStateSequence: AssistantState[]
@@ -17,9 +24,13 @@ export function deriveIsStreamingFromBridgeState(
 
   const currentAssistantState =
     assistantStateSequence[assistantStateSequence.length - 1] ?? null;
-  return currentAssistantState?.phase !== undefined
-    ? currentAssistantState.phase !== 'idle'
-    : false;
+  if (currentAssistantState?.phase === undefined) {
+    return false;
+  }
+
+  return !terminalAssistantPhases.has(
+    currentAssistantState.phase.trim().toLowerCase()
+  );
 }
 
 export const useChatSwiftBridge = () => {

@@ -55,6 +55,18 @@ describe('use-swift-bridge', () => {
     ).toBe(false);
   });
 
+  it('returns false for terminal local assistant phases', () => {
+    for (const phase of ['completed', 'failed', 'cancelled']) {
+      expect(
+        deriveIsStreamingFromBridgeState(false, [
+          makeState({
+            phase,
+          }),
+        ])
+      ).toBe(false);
+    }
+  });
+
   it('preserves an explicit bridge streaming signal', () => {
     expect(deriveIsStreamingFromBridgeState(true, [])).toBe(true);
   });
