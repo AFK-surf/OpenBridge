@@ -4,6 +4,7 @@ import { AnimatePresence, motion, type HTMLMotionProps } from 'motion/react';
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type ReactNode,
@@ -12,12 +13,18 @@ import { createPortal } from 'react-dom';
 import { MaskedScrollArea } from '../../masked-scrollarea';
 import { useMacosVersion } from '@/utils/use-utils-bridge';
 import { commitGlobalCSSVar } from '@/embedded/chat/global-css-var';
+import {
+  resolveActivityCenterAnchorHeight,
+  resolveActivityCenterExitY,
+  shouldPadActivityCenterSafeArea,
+} from './layout';
 
 export const ActivityCenterBanner = ({
   header,
   children,
   visible,
   className,
+  style,
   ...props
 }: HTMLMotionProps<'div'> & {
   header: (expanded: boolean) => ReactNode;
@@ -27,33 +34,63 @@ export const ActivityCenterBanner = ({
   const ref = useRef<HTMLDivElement>(null);
   const macosVersion = useMacosVersion();
   const [open, setOpen] = useState(true);
+  const [anchorHeight, setAnchorHeight] = useState(0);
+  const [measuredVisibleHeight, setMeasuredVisibleHeight] = useState(0);
 
   // banner enter with a spring animation,
   // add extra space to avoid bottom side bounce into viewport
   const safeArea = 60;
   const headerHeight = 36;
 
-  const commitHeight = useCallback((height: number) => {
-    commitGlobalCSSVar(
-      'activityCenterHeight',
-      `${(height ? height - safeArea : 0).toFixed(0)}px`
-    );
-  }, []);
+  const usesSafeAreaPadding = shouldPadActivityCenterSafeArea({
+    anchorHeight,
+    measuredVisibleHeight,
+  });
 
   const detectHeight = useCallback(() => {
     const el = ref.current;
     if (!el || !visible) {
-      commitHeight(0);
+      setMeasuredVisibleHeight(0);
+      setAnchorHeight(0);
       return;
     }
+
+    const paddingBottom =
+      parseFloat(window.getComputedStyle(el).paddingBottom) || 0;
     const height = el.getBoundingClientRect().height;
-    commitHeight(height);
-  }, [visible, commitHeight]);
+    const nextMeasuredVisibleHeight = Math.max(0, height - paddingBottom);
+
+    setMeasuredVisibleHeight(nextMeasuredVisibleHeight);
+    setAnchorHeight(previousAnchorHeight =>
+      resolveActivityCenterAnchorHeight({
+        previousAnchorHeight,
+        measuredVisibleHeight: nextMeasuredVisibleHeight,
+        isOpen: open,
+      })
+    );
+  }, [open, visible]);
 
   // const debouncedDetectHeight = useMemo(
   //   () => debounce(detectHeight, 100),
   //   [detectHeight]
   // );
+
+  useLayoutEffect(() => {
+    detectHeight();
+  }, [detectHeight]);
+
+  useEffect(() => {
+    commitGlobalCSSVar(
+      'activityCenterHeight',
+      `${(visible ? anchorHeight : 0).toFixed(0)}px`
+    );
+  }, [anchorHeight, visible]);
+
+  useEffect(() => {
+    return () => {
+      commitGlobalCSSVar('activityCenterHeight', '0px');
+    };
+  }, []);
 
   useEffect(() => {
     if (!visible) {
@@ -64,10 +101,7 @@ export const ActivityCenterBanner = ({
     if (!el) return;
 
     const dispose = observeResize(el, detectHeight);
-    return () => {
-      detectHeight();
-      dispose();
-    };
+    return dispose;
   }, [visible, detectHeight]);
 
   return createPortal(
@@ -75,7 +109,9 @@ export const ActivityCenterBanner = ({
       {visible && (
         <motion.div
           initial={{ y: 'calc(100% + 20px)' }}
-          exit={{ y: 'calc(100% + 20px)' }}
+          exit={{
+            y: resolveActivityCenterExitY({ anchorHeight, safeArea }),
+          }}
           animate={{ y: 0 }}
           transition={{ type: 'spring', stiffness: 100, damping: 15 }}
           className={cn(
@@ -91,7 +127,13 @@ export const ActivityCenterBanner = ({
               : 'bg-surface-card',
             ''
           )}
-          style={{ paddingBottom: safeArea, bottom: -safeArea }}
+          style={{
+            paddingBottom: usesSafeAreaPadding ? safeArea : 0,
+            ...(anchorHeight > 0
+              ? { top: `calc(100dvh - ${anchorHeight.toFixed(0)}px)` }
+              : { bottom: -safeArea }),
+            ...style,
+          }}
           {...props}
           ref={ref}
         >
@@ -126,9 +168,12 @@ export const ActivityCenterBanner = ({
           {/* Shadow below the banner */}
           <div
             className={cn(
-              'absolute top-0 left-0 w-full h-[calc(100%-60px)] -z-1 rounded-t-2xl',
+              'absolute top-0 left-0 w-full -z-1 rounded-t-2xl',
               'shadow-[0_-24px_24px_rgba(0,0,0,0.1)]'
             )}
+            style={{
+              height: `calc(100% - ${usesSafeAreaPadding ? safeArea : 0}px)`,
+            }}
           />
         </motion.div>
       )}
