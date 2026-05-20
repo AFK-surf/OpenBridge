@@ -255,7 +255,7 @@ function renderContentBlock(
           mimeType={content.mimeType ?? undefined}
           sourcePath={content.fileRef?.path}
           environmentId={content.fileRef?.environmentId ?? undefined}
-          className="max-h-80 w-fit"
+          className="w-fit"
           data-artifact={key}
         />
       ) : null;

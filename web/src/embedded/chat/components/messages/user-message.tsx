@@ -232,7 +232,7 @@ export const UserMessage = ({
                       mimeType={image.mimeType ?? undefined}
                       sourcePath={image.fileRef?.path}
                       environmentId={image.fileRef?.environmentId ?? undefined}
-                      className="h-24 shrink-0"
+                      className="shrink-0"
                     />
                   ) : null
                 )}

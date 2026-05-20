@@ -5,7 +5,13 @@ import {
   resolveAttachmentDisplayURL,
 } from '@/utils/agent-file-url';
 import { hasNativeJSBridge } from '@/utils/bridge-runtime';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
 import { Spinner } from '../loading/spinner';
 import { Menu } from '@/utils/webview-context-menu';
 import { EyeSFSymbolMedium } from '@/assets/sf-symbols/medium/eye';
@@ -14,8 +20,10 @@ import {
   previewAttachmentSource,
   previewSourceRectForElement,
 } from './file-reference-actions';
+import { fitImagePreviewSize } from './image-preview-size';
 
 type PreviewButtonTone = 'dark' | 'light';
+type NaturalImageSize = { width: number; height: number };
 
 function detectPreviewButtonTone(image: HTMLImageElement): PreviewButtonTone {
   const naturalWidth = image.naturalWidth;
@@ -95,6 +103,7 @@ export const AttachmentImage = ({
   sourcePath,
   environmentId,
   className,
+  style,
   ...props
 }: {
   className?: string;
@@ -110,6 +119,7 @@ export const AttachmentImage = ({
   const [resolvedSrc, setResolvedSrc] = useState<string | null>(null);
   const [previewButtonTone, setPreviewButtonTone] =
     useState<PreviewButtonTone>('dark');
+  const [naturalSize, setNaturalSize] = useState<NaturalImageSize | null>(null);
   const figureRef = useRef<HTMLElement | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
 
@@ -229,6 +239,7 @@ export const AttachmentImage = ({
     setStatus('loading');
     setResolvedSrc(null);
     setPreviewButtonTone('dark');
+    setNaturalSize(null);
     resolveUrl();
 
     return () => {
@@ -247,6 +258,12 @@ export const AttachmentImage = ({
       return;
     }
 
+    if (image.naturalWidth > 0 && image.naturalHeight > 0) {
+      setNaturalSize({
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+      });
+    }
     setPreviewButtonTone(detectPreviewButtonTone(image));
     if (resolvedSrc) {
       preparePreviewAsset(resolvedSrc, fileName, mimeType);
@@ -330,6 +347,22 @@ export const AttachmentImage = ({
     ]
   );
 
+  const previewSize = naturalSize
+    ? fitImagePreviewSize(naturalSize.width, naturalSize.height)
+    : null;
+  const imageStyle =
+    previewSize && naturalSize
+      ? ({
+          width: previewSize.width,
+          maxHeight: previewSize.height,
+          aspectRatio: `${naturalSize.width} / ${naturalSize.height}`,
+        } satisfies CSSProperties)
+      : undefined;
+  const figureStyle = {
+    ...style,
+    ...(previewSize ? { width: previewSize.width } : {}),
+  } satisfies CSSProperties;
+
   return (
     <figure
       ref={node => {
@@ -338,9 +371,10 @@ export const AttachmentImage = ({
       onContextMenu={handleContextMenu}
       className={cn(
         'group/image overflow-hidden rounded-lg border border-black/10 dark:border-white/20 relative',
-        'min-h-24 w-fit',
+        'inline-flex min-h-[120px] min-w-[160px] max-w-full items-center justify-center bg-black/5 dark:bg-white/5',
         className
       )}
+      style={figureStyle}
       data-source-path={sourcePath}
       {...props}
     >
@@ -403,9 +437,10 @@ export const AttachmentImage = ({
           alt="Uploaded attachment"
           className={cn(
             'attachment-image',
-            'h-full max-h-[inherit] w-auto object-contain transition-opacity duration-200',
+            'block h-auto max-w-full object-contain transition-opacity duration-200',
             status !== 'loaded' && 'opacity-0'
           )}
+          style={imageStyle}
           loading={isDataUrl ? undefined : 'lazy'}
           decoding="async"
           onLoad={handleLoad}
