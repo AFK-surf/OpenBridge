@@ -20,7 +20,11 @@ import {
   previewAttachmentSource,
   previewSourceRectForElement,
 } from './file-reference-actions';
-import { fitImagePreviewSize } from './image-preview-size';
+import {
+  fitImagePreviewSize,
+  imagePreviewBounds,
+  type ImagePreviewBounds,
+} from './image-preview-size';
 
 type PreviewButtonTone = 'dark' | 'light';
 type NaturalImageSize = { width: number; height: number };
@@ -104,6 +108,7 @@ export const AttachmentImage = ({
   environmentId,
   className,
   style,
+  previewBounds = imagePreviewBounds,
   ...props
 }: {
   className?: string;
@@ -112,6 +117,7 @@ export const AttachmentImage = ({
   mimeType?: string;
   sourcePath?: string;
   environmentId?: string;
+  previewBounds?: ImagePreviewBounds;
 } & React.HTMLAttributes<HTMLElement>) => {
   const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>(
     'loading'
@@ -348,7 +354,7 @@ export const AttachmentImage = ({
   );
 
   const previewSize = naturalSize
-    ? fitImagePreviewSize(naturalSize.width, naturalSize.height)
+    ? fitImagePreviewSize(naturalSize.width, naturalSize.height, previewBounds)
     : null;
   const imageStyle =
     previewSize && naturalSize
@@ -359,6 +365,8 @@ export const AttachmentImage = ({
         } satisfies CSSProperties)
       : undefined;
   const figureStyle = {
+    minWidth: previewBounds.minWidth,
+    minHeight: previewBounds.minHeight,
     ...style,
     ...(previewSize ? { width: previewSize.width } : {}),
   } satisfies CSSProperties;
@@ -371,7 +379,7 @@ export const AttachmentImage = ({
       onContextMenu={handleContextMenu}
       className={cn(
         'group/image overflow-hidden rounded-lg border border-black/10 dark:border-white/20 relative',
-        'inline-flex min-h-[120px] min-w-[160px] max-w-full items-center justify-center bg-black/5 dark:bg-white/5',
+        'inline-flex max-w-full items-center justify-center bg-black/5 dark:bg-white/5',
         className
       )}
       style={figureStyle}

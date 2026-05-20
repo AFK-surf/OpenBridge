@@ -18,6 +18,13 @@ export const imagePreviewBounds: ImagePreviewBounds = {
   maxHeight: 520,
 };
 
+export const imageThumbnailPreviewBounds: ImagePreviewBounds = {
+  minWidth: 96,
+  minHeight: 96,
+  maxWidth: 240,
+  maxHeight: 96,
+};
+
 export function fitImagePreviewSize(
   naturalWidth: number,
   naturalHeight: number,

@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { fitImagePreviewSize } from '../../src/embedded/chat/components/messages/image-preview-size';
+import {
+  fitImagePreviewSize,
+  imageThumbnailPreviewBounds,
+} from '../../src/embedded/chat/components/messages/image-preview-size';
 
 describe('fitImagePreviewSize', () => {
   it('keeps images at their natural size when they are inside the preview bounds', () => {
@@ -28,6 +31,15 @@ describe('fitImagePreviewSize', () => {
     expect(fitImagePreviewSize(300, 1200)).toMatchObject({
       width: 130,
       height: 520,
+    });
+  });
+
+  it('supports smaller thumbnail bounds for user-uploaded images', () => {
+    expect(
+      fitImagePreviewSize(1436, 1240, imageThumbnailPreviewBounds)
+    ).toMatchObject({
+      width: 111,
+      height: 96,
     });
   });
 });

@@ -13,6 +13,7 @@ import { cn } from '@/utils/cn';
 import { animate } from 'motion';
 import { FileAttachmentCard } from './file-attachment';
 import { AttachmentImage } from './attachment-image';
+import { imageThumbnailPreviewBounds } from './image-preview-size';
 import { LinkifiedText } from '../linkified-text';
 import { MaskedScrollArea } from '../masked-scrollarea';
 import { collectUserMessageContent, CopyButton, copyUserMessage } from './copy';
@@ -232,7 +233,8 @@ export const UserMessage = ({
                       mimeType={image.mimeType ?? undefined}
                       sourcePath={image.fileRef?.path}
                       environmentId={image.fileRef?.environmentId ?? undefined}
-                      className="shrink-0"
+                      className="h-24 shrink-0"
+                      previewBounds={imageThumbnailPreviewBounds}
                     />
                   ) : null
                 )}
