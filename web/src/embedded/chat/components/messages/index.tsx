@@ -91,6 +91,7 @@ export const Messages = ({
             allMessages={allMessages}
             currentAssistantStateSequence={currentAssistantState?.sequence}
             isStreaming={isStreaming}
+            onSendMessage={onSendMessage}
           />
         ))}
         <div
@@ -111,6 +112,7 @@ export const Messages = ({
                 allMessages={allMessages}
                 currentAssistantStateSequence={currentAssistantState?.sequence}
                 isStreaming={isStreaming}
+                onSendMessage={onSendMessage}
               />
             );
           })}

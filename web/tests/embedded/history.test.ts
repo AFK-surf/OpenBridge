@@ -151,6 +151,35 @@ describe('embedded chat history filtering', () => {
     ]);
   });
 
+  it('keeps user file cards when only a file ref path is present', () => {
+    const message = makeMessage({
+      id: 'path-only-file',
+      role: 'user',
+      content: [
+        {
+          type: 'file',
+          fileName: 'debug.txt',
+          mimeType: 'text/plain',
+          fileRef: {
+            path: '/tmp/debug.txt',
+            environmentId: 'local-vm-123',
+          },
+        },
+      ],
+    });
+
+    expect(collectUserMessageContent(message).files).toEqual([
+      {
+        filename: 'debug.txt',
+        contentType: 'text/plain',
+        path: '/tmp/debug.txt',
+        url: undefined,
+        environmentId: 'local-vm-123',
+        size: '',
+      },
+    ]);
+  });
+
   it('strips all user reminder blocks from displayed user text', () => {
     const message = makeMessage({
       id: 'macos-user-turn',

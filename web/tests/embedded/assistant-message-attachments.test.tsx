@@ -46,7 +46,33 @@ vi.mock(
 );
 
 vi.mock('../../src/embedded/chat/components/messages/file-attachment', () => ({
-  FileAttachmentCard: () => null,
+  FileAttachmentCard: ({
+    filename,
+    path,
+    ...props
+  }: {
+    filename?: string;
+    path?: string;
+    [key: string]: unknown;
+  }) => (
+    <div
+      data-testid="file-attachment-card"
+      data-artifact={props['data-artifact'] as string | undefined}
+      data-filename={filename}
+      data-source-path={path}
+    />
+  ),
+  shouldRenderFileReferenceFallback: (content: {
+    url?: string | null;
+    fileRef?: { path?: string | null; environmentId?: string | null } | null;
+  }) =>
+    Boolean(
+      !content.url &&
+      content.fileRef?.path &&
+      !['', 'vfs'].includes(
+        content.fileRef.environmentId?.trim().toLowerCase() ?? ''
+      )
+    ),
 }));
 
 vi.mock(
@@ -148,6 +174,34 @@ describe('AssistantMessage attachments', () => {
         '/.agent/deliveries/session/call/cat.png'
       )}"`
     );
+  });
+
+  it('renders inaccessible assistant image refs as file cards', async () => {
+    const message = makeMessage({
+      content: [
+        {
+          type: 'image',
+          fileRef: {
+            path: '/tmp/cat.png',
+            environmentId: 'local-vm-123',
+          },
+          fileName: 'cat.png',
+          mimeType: 'image/png',
+        },
+      ],
+    });
+
+    const markup = renderToStaticMarkup(
+      <AssistantMessage
+        items={[{ type: 'message', message }]}
+        allMessages={[message]}
+        hideOperations
+      />
+    );
+
+    expect(markup).toContain('data-testid="file-attachment-card"');
+    expect(markup).toContain(`data-filename="cat.png"`);
+    expect(markup).toContain(`data-source-path="/tmp/cat.png"`);
   });
 });
 

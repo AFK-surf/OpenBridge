@@ -24,7 +24,10 @@ import { CueStreamdownVideo } from '../markdown/overrides/video';
 import { AttachmentImage } from './attachment-image';
 import { AssistantMessageOperations } from './assistant-message-operations';
 import { AssistantStateSection } from './assistant-state-section';
-import { FileAttachmentCard } from './file-attachment';
+import {
+  FileAttachmentCard,
+  shouldRenderFileReferenceFallback,
+} from './file-attachment';
 import { PermissionMessage } from './permission-message';
 import { QuestionMessage } from './question-message';
 import { SaveFileMessage } from './save-file-message';
@@ -119,16 +122,30 @@ export type ToolMessageRenderer = (
 const AssistantAudio = ({
   content,
   artifactId,
+  onRequestFileAccess,
 }: {
   content: SessionHistoryMessageContent;
   artifactId?: string;
+  onRequestFileAccess?: (message: string) => void | Promise<void>;
 }) => {
   const resolvedUrl = useResolvedUrl({
     src: content.url,
     filePath: content.fileRef?.path,
     environmentId: content.fileRef?.environmentId,
   });
-  if (!resolvedUrl) return null;
+  if (!resolvedUrl) {
+    return shouldRenderFileReferenceFallback(content) ? (
+      <FileAttachmentCard
+        filename={content.fileName ?? 'Audio file'}
+        contentType={content.mimeType ?? 'audio/mpeg'}
+        path={content.fileRef?.path}
+        environmentId={content.fileRef?.environmentId ?? undefined}
+        size=""
+        data-artifact={artifactId}
+        onRequestFileAccess={onRequestFileAccess}
+      />
+    ) : null;
+  }
   return (
     <CueStreamdownAudio
       src={resolvedUrl}
@@ -143,15 +160,31 @@ const AssistantAudio = ({
 
 const AssistantVideo = ({
   content,
+  artifactId,
+  onRequestFileAccess,
 }: {
   content: SessionHistoryMessageContent;
+  artifactId?: string;
+  onRequestFileAccess?: (message: string) => void | Promise<void>;
 }) => {
   const resolvedUrl = useResolvedUrl({
     src: content.url,
     filePath: content.fileRef?.path,
     environmentId: content.fileRef?.environmentId,
   });
-  if (!resolvedUrl) return null;
+  if (!resolvedUrl) {
+    return shouldRenderFileReferenceFallback(content) ? (
+      <FileAttachmentCard
+        filename={content.fileName ?? 'Video file'}
+        contentType={content.mimeType ?? 'video/mp4'}
+        path={content.fileRef?.path}
+        environmentId={content.fileRef?.environmentId ?? undefined}
+        size=""
+        data-artifact={artifactId}
+        onRequestFileAccess={onRequestFileAccess}
+      />
+    ) : null;
+  }
   return (
     <CueStreamdownVideo
       src={resolvedUrl}
@@ -231,7 +264,8 @@ function renderContentBlock(
   content: SessionHistoryMessageContent,
   key: string,
   isAnimating: boolean,
-  messageId: string
+  messageId: string,
+  onRequestFileAccess?: (message: string) => void | Promise<void>
 ) {
   switch (content.type) {
     case 'text':
@@ -247,6 +281,21 @@ function renderContentBlock(
         </div>
       ) : null;
     case 'image':
+      if (shouldRenderFileReferenceFallback(content)) {
+        return (
+          <FileAttachmentCard
+            key={key}
+            filename={content.fileName ?? 'Image file'}
+            contentType={content.mimeType ?? 'image/png'}
+            path={content.fileRef?.path}
+            environmentId={content.fileRef?.environmentId ?? undefined}
+            size=""
+            data-artifact={key}
+            onRequestFileAccess={onRequestFileAccess}
+          />
+        );
+      }
+
       return content.url || content.fileRef?.path ? (
         <AttachmentImage
           key={key}
@@ -261,11 +310,23 @@ function renderContentBlock(
       ) : null;
     case 'audio':
       return content.url || content.fileRef?.path ? (
-        <AssistantAudio key={key} content={content} artifactId={key} />
+        <AssistantAudio
+          key={key}
+          content={content}
+          artifactId={key}
+          onRequestFileAccess={onRequestFileAccess}
+        />
       ) : null;
     case 'video':
       if (content.url || content.fileRef?.path) {
-        return <AssistantVideo key={key} content={content} />;
+        return (
+          <AssistantVideo
+            key={key}
+            content={content}
+            artifactId={key}
+            onRequestFileAccess={onRequestFileAccess}
+          />
+        );
       }
       return null;
     case 'file':
@@ -282,6 +343,7 @@ function renderContentBlock(
           environmentId={content.fileRef?.environmentId ?? undefined}
           size=""
           data-artifact={key}
+          onRequestFileAccess={onRequestFileAccess}
         />
       );
     default:
@@ -299,6 +361,7 @@ export const AssistantMessage = ({
   isAnimating = false,
   hideOperations = false,
   renderToolMessage,
+  onSendMessage,
 }: {
   items: AssistantGroupItem[];
   allMessages: SessionHistoryMessage[];
@@ -309,6 +372,7 @@ export const AssistantMessage = ({
   isAnimating?: boolean;
   hideOperations?: boolean;
   renderToolMessage?: ToolMessageRenderer;
+  onSendMessage?: (text: string) => void;
 }) => {
   const hasCurrentExecutionState = items.some(
     item =>
@@ -633,7 +697,8 @@ export const AssistantMessage = ({
           prepared,
           `${msg.id || itemIndex}-${ci}`,
           isAnimating,
-          msg.messageId ?? msg.id
+          msg.messageId ?? msg.id,
+          onSendMessage
         );
       })
       .filter(Boolean);

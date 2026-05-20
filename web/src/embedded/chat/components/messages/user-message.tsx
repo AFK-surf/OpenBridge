@@ -11,7 +11,10 @@ import type {
 } from '../../types/history';
 import { cn } from '@/utils/cn';
 import { animate } from 'motion';
-import { FileAttachmentCard } from './file-attachment';
+import {
+  FileAttachmentCard,
+  shouldRenderFileReferenceFallback,
+} from './file-attachment';
 import { AttachmentImage } from './attachment-image';
 import { LinkifiedText } from '../linkified-text';
 import { MaskedScrollArea } from '../masked-scrollarea';
@@ -82,13 +85,30 @@ function renderEmptyTag(text: string): string {
   return text.replace(/<empty\s*\/>/g, '');
 }
 
-const UserAudio = ({ content }: { content: SessionHistoryMessageContent }) => {
+const UserAudio = ({
+  content,
+  onRequestFileAccess,
+}: {
+  content: SessionHistoryMessageContent;
+  onRequestFileAccess?: (message: string) => void | Promise<void>;
+}) => {
   const resolvedUrl = useResolvedUrl({
     src: content.url,
     filePath: content.fileRef?.path,
     environmentId: content.fileRef?.environmentId,
   });
-  if (!resolvedUrl) return null;
+  if (!resolvedUrl) {
+    return shouldRenderFileReferenceFallback(content) ? (
+      <FileAttachmentCard
+        filename={content.fileName ?? 'Audio file'}
+        contentType={content.mimeType ?? 'audio/mpeg'}
+        path={content.fileRef?.path}
+        environmentId={content.fileRef?.environmentId ?? undefined}
+        size=""
+        onRequestFileAccess={onRequestFileAccess}
+      />
+    ) : null;
+  }
   return (
     <CueStreamdownAudio
       src={resolvedUrl}
@@ -100,13 +120,30 @@ const UserAudio = ({ content }: { content: SessionHistoryMessageContent }) => {
   );
 };
 
-const UserVideo = ({ content }: { content: SessionHistoryMessageContent }) => {
+const UserVideo = ({
+  content,
+  onRequestFileAccess,
+}: {
+  content: SessionHistoryMessageContent;
+  onRequestFileAccess?: (message: string) => void | Promise<void>;
+}) => {
   const resolvedUrl = useResolvedUrl({
     src: content.url,
     filePath: content.fileRef?.path,
     environmentId: content.fileRef?.environmentId,
   });
-  if (!resolvedUrl) return null;
+  if (!resolvedUrl) {
+    return shouldRenderFileReferenceFallback(content) ? (
+      <FileAttachmentCard
+        filename={content.fileName ?? 'Video file'}
+        contentType={content.mimeType ?? 'video/mp4'}
+        path={content.fileRef?.path}
+        environmentId={content.fileRef?.environmentId ?? undefined}
+        size=""
+        onRequestFileAccess={onRequestFileAccess}
+      />
+    ) : null;
+  }
   return (
     <CueStreamdownVideo
       src={resolvedUrl}
@@ -122,9 +159,11 @@ const UserVideo = ({ content }: { content: SessionHistoryMessageContent }) => {
 export const UserMessage = ({
   message,
   enterAnimation = false,
+  onSendMessage,
 }: {
   message: SessionHistoryMessage;
   enterAnimation?: boolean;
+  onSendMessage?: (text: string) => void;
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const minimapOptions = useMinimapOptions();
@@ -208,6 +247,7 @@ export const UserMessage = ({
                   url={file.url}
                   environmentId={file.environmentId}
                   size={file.size}
+                  onRequestFileAccess={onSendMessage}
                   className={cn(
                     files.length > 2 &&
                       files.length % 2 !== 0 &&
@@ -223,8 +263,25 @@ export const UserMessage = ({
             <MaskedScrollArea horizontal className="w-full">
               <div className="flex gap-2">
                 <div className="flex-1 min-w-0" />
-                {images.map((image, i) =>
-                  image.url || image.fileRef?.path ? (
+                {images.map((image, i) => {
+                  if (shouldRenderFileReferenceFallback(image)) {
+                    return (
+                      <FileAttachmentCard
+                        key={`img-${i}`}
+                        filename={image.fileName ?? 'Image file'}
+                        contentType={image.mimeType ?? 'image/png'}
+                        path={image.fileRef?.path}
+                        environmentId={
+                          image.fileRef?.environmentId ?? undefined
+                        }
+                        size=""
+                        onRequestFileAccess={onSendMessage}
+                        className="min-w-72 shrink-0"
+                      />
+                    );
+                  }
+
+                  return image.url || image.fileRef?.path ? (
                     <AttachmentImage
                       key={`img-${i}`}
                       src={image.url}
@@ -234,8 +291,8 @@ export const UserMessage = ({
                       environmentId={image.fileRef?.environmentId ?? undefined}
                       className="h-24 shrink-0"
                     />
-                  ) : null
-                )}
+                  ) : null;
+                })}
               </div>
             </MaskedScrollArea>
           )}
@@ -244,7 +301,11 @@ export const UserMessage = ({
             <div className="flex flex-col gap-2 items-end">
               {audios.map((audio, i) =>
                 audio.url || audio.fileRef?.path ? (
-                  <UserAudio key={`audio-${i}`} content={audio} />
+                  <UserAudio
+                    key={`audio-${i}`}
+                    content={audio}
+                    onRequestFileAccess={onSendMessage}
+                  />
                 ) : null
               )}
             </div>
@@ -254,7 +315,11 @@ export const UserMessage = ({
             <div className="flex flex-col gap-2 items-end">
               {videos.map((video, i) =>
                 video.url || video.fileRef?.path ? (
-                  <UserVideo key={`video-${i}`} content={video} />
+                  <UserVideo
+                    key={`video-${i}`}
+                    content={video}
+                    onRequestFileAccess={onSendMessage}
+                  />
                 ) : null
               )}
             </div>

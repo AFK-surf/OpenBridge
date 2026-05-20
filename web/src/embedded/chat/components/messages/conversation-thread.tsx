@@ -267,6 +267,7 @@ export const ConversationMessageGroupView = ({
   activeTurnUserMessageId,
   isStreaming,
   renderToolMessage,
+  onSendMessage,
 }: {
   group: ConversationMessageGroup;
   index: number;
@@ -277,6 +278,7 @@ export const ConversationMessageGroupView = ({
   activeTurnUserMessageId?: string;
   isStreaming: boolean;
   renderToolMessage?: ToolMessageRenderer;
+  onSendMessage?: (text: string) => void;
 }) => {
   switch (group.type) {
     case 'user':
@@ -286,6 +288,7 @@ export const ConversationMessageGroupView = ({
             <UserMessage
               message={group.message}
               enterAnimation={isStreaming && index === totalGroups - 1}
+              onSendMessage={onSendMessage}
             />
           </DebugMessage>
         </ErrorBoundary>
@@ -311,6 +314,7 @@ export const ConversationMessageGroupView = ({
               isAnimating={isActiveAssistantTurn}
               hideOperations={hideOperations}
               renderToolMessage={renderToolMessage}
+              onSendMessage={onSendMessage}
             />
           </DebugMessage>
         </ErrorBoundary>
@@ -327,12 +331,14 @@ export const ConversationThread = ({
   isStreaming,
   className,
   renderToolMessage,
+  onSendMessage,
 }: {
   messages: SessionHistoryMessage[];
   assistantStateSequence: AssistantState[];
   isStreaming: boolean;
   className?: string;
   renderToolMessage?: ToolMessageRenderer;
+  onSendMessage?: (text: string) => void;
 }) => {
   const {
     allMessages,
@@ -361,6 +367,7 @@ export const ConversationThread = ({
           activeTurnUserMessageId={activeTurnUserMessageId}
           isStreaming={isStreaming}
           renderToolMessage={renderToolMessage}
+          onSendMessage={onSendMessage}
         />
       ))}
     </div>

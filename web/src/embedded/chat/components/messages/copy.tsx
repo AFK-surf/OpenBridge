@@ -46,13 +46,13 @@ export function collectUserMessageContent(
       } else {
         result.texts.push(c.text);
       }
-    } else if (c.type === 'image' && c.url) {
+    } else if (c.type === 'image' && (c.url || c.fileRef?.path)) {
       result.images.push(c);
     } else if (c.type === 'audio') {
       result.audios.push(c);
     } else if (c.type === 'video') {
       result.videos.push(c);
-    } else if (c.type === 'file' && c.url) {
+    } else if (c.type === 'file' && (c.url || c.fileRef?.path)) {
       result.files.push({
         filename: c.fileName ?? 'unknown',
         contentType: c.mimeType ?? 'application/octet-stream',
