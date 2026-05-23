@@ -3,9 +3,9 @@ import KWWKAI
 
 enum BridgeAIProviderRegistry {
     private static let sourceId = "bridge-ai"
+    private static let azureOpenAIResponsesAPI = "azure-openai-responses"
 
     static func registerProviders() async {
-        await APIRegistry.shared.unregisterSource(sourceId)
         var settings = await BridgeAIProviderSecretStore.readSettings()
         let anthropicConfig = settings[.anthropic]
         if anthropicConfig.authMethod == .oauth {
@@ -24,6 +24,8 @@ enum BridgeAIProviderRegistry {
                 endpoint: azureEndpoint,
                 apiKey: nil
             ), sourceId: sourceId)
+        } else {
+            await APIRegistry.shared.unregister(api: azureOpenAIResponsesAPI)
         }
         var openAIConfig = settings[.openAI]
         if openAIConfig.oauthAccountID == nil {
