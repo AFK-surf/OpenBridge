@@ -8,6 +8,26 @@
 import Cocoa
 import SwiftUI
 
+@MainActor
+protocol AppIconApplying {
+    func setBundleIcon(_ image: NSImage?, forFile path: String) -> Bool
+    func setApplicationIconImage(_ image: NSImage?)
+}
+
+struct AppIconApplyResult: Equatable {
+    let didSetRuntimeIconOverride: Bool
+}
+
+struct SystemAppIconApplier: AppIconApplying {
+    func setBundleIcon(_ image: NSImage?, forFile path: String) -> Bool {
+        NSWorkspace.shared.setIcon(image, forFile: path, options: [])
+    }
+
+    func setApplicationIconImage(_ image: NSImage?) {
+        NSApp.applicationIconImage = image
+    }
+}
+
 enum AppIcon: String, CaseIterable, Identifiable, Codable {
     case `default`
     #if DEBUG
@@ -59,14 +79,27 @@ enum AppIcon: String, CaseIterable, Identifiable, Codable {
         }
     }
 
-    func apply() {
-        let bundlePath = Bundle.main.bundleURL.path
-        let customIcon: NSImage? = self == .default ? nil : image
-        if !NSWorkspace.shared.setIcon(customIcon, forFile: bundlePath, options: []) {
+    @MainActor
+    @discardableResult
+    func apply(
+        to applier: AppIconApplying = SystemAppIconApplier(),
+        bundlePath: String = Bundle.main.bundleURL.path
+    ) -> AppIconApplyResult {
+        if self == .default {
+            if !applier.setBundleIcon(nil, forFile: bundlePath) {
+                Logger.app.error("Failed to reset bundle icon for \(bundlePath)")
+            }
+            applier.setApplicationIconImage(nil)
+            return AppIconApplyResult(didSetRuntimeIconOverride: false)
+        }
+
+        let customIcon = image
+        if !applier.setBundleIcon(customIcon, forFile: bundlePath) {
             Logger.app.error("Failed to set bundle icon for \(bundlePath)")
         }
-        NSApp.applicationIconImage = nil
-        NSApp.applicationIconImage = image
+        applier.setApplicationIconImage(nil)
+        applier.setApplicationIconImage(customIcon)
+        return AppIconApplyResult(didSetRuntimeIconOverride: true)
     }
 
     #if DEBUG

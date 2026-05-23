@@ -31,6 +31,10 @@ private var isPreviewMode: Bool {
             UserDefaults.standard.set(SystemAccentColor.default.rawValue, forKey: SettingsKeyName.accentColorName.key)
         }
 
+        if arguments.contains("-e2eResetAppIcon") {
+            UserDefaults.standard.set(AppIcon.default.rawValue, forKey: SettingsKeyName.appIcon.key)
+        }
+
         SettingsManager.shared.enabledFeatures = SettingsManager.Defaults.enabledFeatures
     }
 #endif

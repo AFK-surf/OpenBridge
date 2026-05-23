@@ -31,7 +31,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.appearance = SettingsManager.shared.appearance.nsAppearance
 
         // Apply persisted app icon on startup
-        SettingsManager.shared.appIcon.apply()
+        #if DEBUG
+            let appIconApplyResult = SettingsManager.shared.appIcon.apply()
+            writeDefaultAppIconE2EReportIfRequested(applyResult: appIconApplyResult)
+        #else
+            SettingsManager.shared.appIcon.apply()
+        #endif
 
         _ = GlobalShortcutManager.shared
         _ = ChatViewModel.shared
@@ -78,6 +83,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         alert.addButton(withTitle: "Continue Anyway")
         alert.runModal()
     }
+
+    #if DEBUG
+        private func writeDefaultAppIconE2EReportIfRequested(applyResult: AppIconApplyResult) {
+            let processInfo = ProcessInfo.processInfo
+            guard processInfo.arguments.contains("-e2eAssertDefaultAppIconUsesSystemRenderer"),
+                  let reportPath = processInfo.environment["OPENBRIDGE_E2E_APP_ICON_REPORT_PATH"],
+                  !reportPath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            else {
+                return
+            }
+
+            let reportURL = URL(fileURLWithPath: reportPath)
+            let report = [
+                "appIcon=\(SettingsManager.shared.appIcon.rawValue)",
+                "runtimeIconOverrideCleared=\(!applyResult.didSetRuntimeIconOverride)",
+            ].joined(separator: "\n")
+
+            do {
+                try FileManager.default.createDirectory(
+                    at: reportURL.deletingLastPathComponent(),
+                    withIntermediateDirectories: true
+                )
+                try "\(report)\n".write(to: reportURL, atomically: true, encoding: .utf8)
+            } catch {
+                Logger.app.error("Failed to write app icon E2E report: \(error.localizedDescription)")
+            }
+        }
+    #endif
 
     func applicationShouldTerminate(_: NSApplication) -> NSApplication.TerminateReply {
         if terminateImmediately { return .terminateNow }
