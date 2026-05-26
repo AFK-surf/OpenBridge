@@ -87,16 +87,20 @@ enum ConversationListLiquidVirtualization {
         var cursorY = style.verticalPadding
 
         for (sectionIndex, section) in sections.enumerated() {
-            if sectionIndex > 0, style.showsSectionDivider {
-                rows.append(
-                    Row(
-                        id: "divider-\(sectionIndex)",
-                        minY: cursorY,
-                        height: style.dividerHeight,
-                        kind: .divider
+            if sectionIndex > 0 {
+                if style.showsSectionDivider {
+                    rows.append(
+                        Row(
+                            id: "divider-\(sectionIndex)",
+                            minY: cursorY,
+                            height: style.dividerHeight,
+                            kind: .divider
+                        )
                     )
-                )
-                cursorY += style.dividerHeight
+                    cursorY += style.dividerHeight
+                } else {
+                    cursorY += style.sectionSpacing
+                }
             }
 
             rows.append(

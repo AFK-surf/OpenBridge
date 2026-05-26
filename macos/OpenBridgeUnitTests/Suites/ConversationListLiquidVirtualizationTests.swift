@@ -1,3 +1,4 @@
+import CoreGraphics
 @testable import OpenBridge
 import Testing
 
@@ -47,7 +48,87 @@ struct ConversationListLiquidVirtualizationTests {
 
         #expect(visibleRows.count < layout.rows.count)
         #expect(visibleRows.first?.id == "session-3")
-        #expect(visibleRows.last?.id == "session-5")
+        #expect(visibleRows.last?.id == "session-6")
+    }
+
+    @Test
+    func `menu row metrics stay compact for legacy history menu`() {
+        let style = ConversationListPresentationStyle.menu
+
+        #expect(style.rowHeight == 30)
+        #expect(style.rowSpacing == 2)
+        #expect(style.sectionSpacing == 0)
+        #expect(style.rowHoverBackgroundHeight == style.rowHeight)
+    }
+
+    @Test
+    func `liquid popup row metrics do not add a gap between adjacent row backgrounds`() {
+        let style = ConversationListPresentationStyle.liquidPopup
+        let hoverOverhang = max(CGFloat.zero, style.rowHoverBackgroundHeight - style.rowHeight)
+        let overlapBetweenAdjacentHoverBackgrounds = hoverOverhang - style.rowSpacing
+
+        #expect(style.rowHeight == 36)
+        #expect(style.rowVerticalPadding == 3)
+        #expect(!style.showsPreview)
+        #expect(style.rowHoverBackgroundHeight <= style.rowHeight)
+        #expect(style.rowSpacing == 0)
+        #expect(overlapBetweenAdjacentHoverBackgrounds <= 0)
+        #expect(style.sectionSpacing >= 12)
+    }
+
+    @Test
+    func `liquid popup layout keeps consecutive session rows hover safe`() {
+        let layout = ConversationListLiquidVirtualization.buildLayout(
+            sections: [
+                ConversationListSection(
+                    title: "today",
+                    items: [
+                        session(id: "a", updatedAt: 300),
+                        session(id: "b", updatedAt: 200),
+                    ]
+                ),
+            ],
+            style: .liquidPopup,
+            includesLoadMoreFooter: false,
+            loadMoreFooterHeight: 28
+        )
+        let sessionRows = layout.rows.filter { row in
+            if case .session = row.kind {
+                return true
+            }
+            return false
+        }
+
+        #expect(sessionRows.count == 2)
+        let gap = sessionRows[1].minY - sessionRows[0].maxY
+        #expect(gap == 0)
+    }
+
+    @Test
+    func `liquid popup layout keeps section headers clear of preceding row hover`() throws {
+        let layout = ConversationListLiquidVirtualization.buildLayout(
+            sections: [
+                ConversationListSection(
+                    title: "yesterday",
+                    items: [
+                        session(id: "recent", updatedAt: 300),
+                    ]
+                ),
+                ConversationListSection(
+                    title: "3w ago",
+                    items: [
+                        session(id: "older", updatedAt: 200),
+                    ]
+                ),
+            ],
+            style: .liquidPopup,
+            includesLoadMoreFooter: false,
+            loadMoreFooterHeight: 28
+        )
+        let recentRow = try #require(layout.rows.first { $0.id == "recent" })
+        let olderHeader = try #require(layout.rows.first { $0.id == "header-1-3w ago" })
+
+        #expect(olderHeader.minY - recentRow.maxY >= ConversationListPresentationStyle.liquidPopup.sectionSpacing)
     }
 
     @Test

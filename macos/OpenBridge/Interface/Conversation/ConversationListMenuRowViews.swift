@@ -54,6 +54,7 @@ struct SessionRowButton: View {
                 .padding(.vertical, style.rowVerticalPadding)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(height: style.rowHeight)
         .background(alignment: .center) {
             rowBackground
                 .frame(height: style.rowHoverBackgroundHeight)

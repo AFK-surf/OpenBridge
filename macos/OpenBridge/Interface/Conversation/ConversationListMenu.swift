@@ -1063,7 +1063,21 @@ enum ConversationListPresentationStyle: Equatable {
     }
 
     var rowSpacing: CGFloat {
-        2
+        switch self {
+        case .menu:
+            2
+        case .liquidPopup:
+            0
+        }
+    }
+
+    var sectionSpacing: CGFloat {
+        switch self {
+        case .menu:
+            0
+        case .liquidPopup:
+            12
+        }
     }
 
     var rowHorizontalPadding: CGFloat {
@@ -1094,12 +1108,7 @@ enum ConversationListPresentationStyle: Equatable {
     }
 
     var rowHoverBackgroundHeight: CGFloat {
-        switch self {
-        case .menu:
-            rowHeight
-        case .liquidPopup:
-            38
-        }
+        rowHeight
     }
 
     var rowOuterHorizontalPadding: CGFloat {
@@ -1121,12 +1130,7 @@ enum ConversationListPresentationStyle: Equatable {
     }
 
     var showsPreview: Bool {
-        switch self {
-        case .menu:
-            false
-        case .liquidPopup:
-            true
-        }
+        false
     }
 
     var sectionFont: Font {
@@ -1323,8 +1327,12 @@ struct ConversationListMenuContent: View {
     private func listContent(_ groups: [ConversationListSection]) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             ForEach(Array(groups.enumerated()), id: \.offset) { index, section in
-                if index > 0, style.showsSectionDivider {
-                    Divider().padding(.vertical, 4)
+                if index > 0 {
+                    if style.showsSectionDivider {
+                        Divider().padding(.vertical, 4)
+                    } else if style.sectionSpacing > 0 {
+                        Color.clear.frame(height: style.sectionSpacing)
+                    }
                 }
                 sectionView(section)
             }
@@ -1373,6 +1381,7 @@ struct ConversationListMenuContent: View {
                 ForEach(section.items, id: \.id) { session in
                     sessionRow(session)
                         .padding(.horizontal, style.rowOuterHorizontalPadding)
+                        .frame(height: style.rowHeight)
                 }
             }
         }
@@ -1383,7 +1392,9 @@ struct ConversationListMenuContent: View {
 
         var height: CGFloat = padding
         for (index, section) in groups.enumerated() {
-            if index > 0, style.showsSectionDivider { height += style.dividerHeight }
+            if index > 0 {
+                height += style.showsSectionDivider ? style.dividerHeight : style.sectionSpacing
+            }
             height += style.sectionHeaderHeight
             height += CGFloat(section.items.count) * style.rowHeight
             height += CGFloat(max(section.items.count - 1, 0)) * style.rowSpacing
