@@ -10,7 +10,9 @@ import SwiftUI
 struct AppearanceSettingsView: View {
     @Environment(SettingsManager.self) private var settingsManager
 
-    private var languages = Bundle.main.localizations.filter { $0 != "Base" }
+    private var languages: [String] {
+        AppLanguageSelection.availableLocalizations(from: Bundle.main.localizations)
+    }
 
     var body: some View {
         @Bindable var settingsManager = settingsManager
@@ -129,18 +131,26 @@ extension AppearanceSettingsView {
             )
     }
 
-    @ViewBuilder
     private var languageSetting: some View {
-        @Bindable var settingsManager = settingsManager
-        Picker("Language", selection: $settingsManager.language) {
+        Picker("Language", selection: languageSelection) {
             ForEach(languages, id: \.self) { code in
-                Text(displayName(for: code)).tag(code)
+                Text(AppLanguageSelection.displayName(for: code)).tag(code)
             }
         }
     }
 
-    private func displayName(for code: String) -> String {
-        Locale.current.localizedString(forIdentifier: code) ?? code
+    private var languageSelection: Binding<String> {
+        Binding(
+            get: {
+                AppLanguageSelection.resolvedSelection(
+                    for: settingsManager.language,
+                    availableLocalizations: languages
+                )
+            },
+            set: { language in
+                settingsManager.language = language
+            }
+        )
     }
 }
 
