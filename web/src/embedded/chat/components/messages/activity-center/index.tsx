@@ -90,6 +90,37 @@ export const ActivityCenter = ({
   }, [environmentId]);
 
   const canAccept = showFiles && !isAccepting && !isDiscarding;
+  const headerTitle = showFiles
+    ? 'Workspace file changes'
+    : (visibleTask?.title ?? 'Files');
+
+  const fileActions = showFiles ? (
+    <div className="flex items-center gap-[6px] shrink-0">
+      <Button
+        variant="primary"
+        onClick={e => {
+          e.stopPropagation();
+          handleAccept();
+        }}
+        disabled={!canAccept || selectedPaths.size === 0}
+      >
+        {isAccepting ? (
+          <Spinner className="text-primary-highlight w-3 h-3" />
+        ) : (
+          `Accept${selectedPaths.size < allFilePaths.length ? ` (${selectedPaths.size})` : ''}`
+        )}
+      </Button>
+      <Button
+        onClick={e => {
+          e.stopPropagation();
+          handleDiscardAll();
+        }}
+        disabled={!canAccept}
+      >
+        {isDiscarding ? <Spinner className="w-3 h-3" /> : 'Reject'}
+      </Button>
+    </div>
+  ) : null;
 
   const header = (expanded: boolean) => (
     <div className="flex items-center justify-between h-full px-[8px]">
@@ -99,39 +130,15 @@ export const ActivityCenter = ({
             <TaskStatusIcon task={visibleTask} isStreaming={isStreaming} />
           )}
         </div>
-        <span className="text-[13px] leading-[19px] text-text-primary font-medium truncate ml-1">
-          {visibleTask?.title ?? 'Files'}
-        </span>
+        <div className="flex items-center min-w-0 flex-1 gap-[6px] ml-1">
+          <span className="text-[13px] leading-[19px] text-text-primary font-medium truncate min-w-0">
+            {headerTitle}
+          </span>
+          {fileActions}
+        </div>
       </div>
 
-      <div className="flex items-center text-text-secondary gap-[6px]">
-        {showFiles && (
-          <>
-            <Button
-              variant="primary"
-              onClick={e => {
-                e.stopPropagation();
-                handleAccept();
-              }}
-              disabled={!canAccept || selectedPaths.size === 0}
-            >
-              {isAccepting ? (
-                <Spinner className="text-primary-highlight w-3 h-3" />
-              ) : (
-                `Accept${selectedPaths.size < allFilePaths.length ? ` (${selectedPaths.size})` : ''}`
-              )}
-            </Button>
-            <Button
-              onClick={e => {
-                e.stopPropagation();
-                handleDiscardAll();
-              }}
-              disabled={!canAccept}
-            >
-              {isDiscarding ? <Spinner className="w-3 h-3" /> : 'Reject'}
-            </Button>
-          </>
-        )}
+      <div className="flex items-center text-text-secondary gap-[6px] shrink-0">
         {showTask && visibleTask && (
           <div
             onClick={async () => {
