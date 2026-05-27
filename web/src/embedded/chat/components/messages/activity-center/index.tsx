@@ -93,6 +93,10 @@ export const ActivityCenter = ({
   const headerTitle = showFiles
     ? 'Workspace file changes'
     : (visibleTask?.title ?? 'Files');
+  const headerIcon =
+    !showFiles && visibleTask ? (
+      <TaskStatusIcon task={visibleTask} isStreaming={isStreaming} />
+    ) : null;
 
   const fileActions = showFiles ? (
     <div className="flex items-center gap-[6px] shrink-0">
@@ -125,12 +129,12 @@ export const ActivityCenter = ({
   const header = (expanded: boolean) => (
     <div className="flex items-center justify-between h-full px-[8px]">
       <div className="flex items-center min-w-0 flex-1">
-        <div className="flex h-5 w-5 items-center justify-center hide-if-empty">
-          {visibleTask && (
-            <TaskStatusIcon task={visibleTask} isStreaming={isStreaming} />
-          )}
-        </div>
-        <div className="flex items-center min-w-0 flex-1 gap-[6px] ml-1">
+        {headerIcon && (
+          <div className="flex h-5 w-5 items-center justify-center mr-1">
+            {headerIcon}
+          </div>
+        )}
+        <div className="flex items-center min-w-0 flex-1 gap-[6px]">
           <span className="text-[13px] leading-[19px] text-text-primary font-medium truncate min-w-0">
             {headerTitle}
           </span>

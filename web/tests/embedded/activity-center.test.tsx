@@ -75,7 +75,9 @@ function makeWorkspaceState(): WorkspaceState {
   };
 }
 
-function makeTaskMessage(): SessionHistoryMessage {
+function makeTaskMessage(
+  taskTitle = 'Workspace file changes'
+): SessionHistoryMessage {
   return {
     id: 'task-start-1',
     type: 'task',
@@ -83,12 +85,12 @@ function makeTaskMessage(): SessionHistoryMessage {
     timestamp: 1,
     taskId: 'task-1',
     action: 'start',
-    taskTitle: 'Workspace file changes',
+    taskTitle,
     todos: [],
   };
 }
 
-function renderActivityCenter() {
+function renderActivityCenter({ taskTitle }: { taskTitle?: string } = {}) {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
@@ -97,7 +99,7 @@ function renderActivityCenter() {
   flushSync(() => {
     root.render(
       <ActivityCenter
-        messages={[makeTaskMessage()]}
+        messages={[makeTaskMessage(taskTitle)]}
         workspaceState={makeWorkspaceState()}
         isStreaming={false}
         hasOpenTask
@@ -167,5 +169,19 @@ describe('ActivityCenter', () => {
     expect(rejectButton?.compareDocumentPosition(expandButton as Node)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING
     );
+  });
+
+  it('uses the file changes heading without duplicating the conversation task title', () => {
+    renderActivityCenter({ taskTitle: 'Fix activity center alignment' });
+
+    const header = document.body.querySelector('header');
+    expect(header?.textContent).toContain('Workspace file changes');
+    expect(header?.textContent).not.toContain('Fix activity center alignment');
+
+    const title = Array.from(header?.querySelectorAll('span') ?? []).find(
+      element => element.textContent === 'Workspace file changes'
+    );
+
+    expect(title?.parentElement?.previousElementSibling).toBeNull();
   });
 });
