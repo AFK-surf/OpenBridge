@@ -293,8 +293,6 @@ private extension SyncFolderSection {
 }
 
 private struct SuggestedSyncFolderRow: View {
-    @Environment(SettingsManager.self) private var settings
-
     let source: SkillDirectories.SyncSkillSource
     let url: URL
     let onAdd: () -> Void
@@ -302,10 +300,6 @@ private struct SuggestedSyncFolderRow: View {
     private var displayPath: String {
         let home = SkillDirectories.homeDirectory.path
         return url.path.hasPrefix(home) ? "~" + url.path.dropFirst(home.count) : url.path
-    }
-
-    private var addButtonTint: Color {
-        settings.accentColorName == .default ? settings.systemAccentColor : settings.accentColor
     }
 
     var body: some View {
@@ -346,8 +340,7 @@ private struct SuggestedSyncFolderRow: View {
             Button(String(localized: "Add")) {
                 onAdd()
             }
-            .tint(addButtonTint)
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.bordered)
             .controlSize(.small)
             .accessibilityIdentifier(AccessibilityID.Settings.syncedSkillsSuggestedAddButton(source.key))
         }

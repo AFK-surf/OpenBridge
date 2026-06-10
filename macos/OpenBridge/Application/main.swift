@@ -31,6 +31,10 @@ private var isPreviewMode: Bool {
             UserDefaults.standard.set(SystemAccentColor.default.rawValue, forKey: SettingsKeyName.accentColorName.key)
         }
 
+        if arguments.contains("-e2eLightAppearance") {
+            UserDefaults.standard.set(Appearance.light.rawValue, forKey: SettingsKeyName.appearance.key)
+        }
+
         SettingsManager.shared.enabledFeatures = SettingsManager.Defaults.enabledFeatures
     }
 #endif
